@@ -1,0 +1,19 @@
+# Joint command message
+#
+# This message contains the name of controlled joint, feed-forward torque,
+# desired joint position and velocity together with the kp_scale and kd_scale
+# constants for a PD controller.
+#
+# Applied joint torque is calculated as follows:
+# torque = torque_ff + kp_scale * kp * position_error + kd_scale * kd * velocity_error
+# where kp and kd are constants in joint controller
+
+Header header
+
+string[]  name
+float64[] desired_position
+float64[] desired_velocity
+float64[] kp_scale
+float64[] kd_scale
+float64[] feedforward_torque
+
