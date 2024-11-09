@@ -8,9 +8,9 @@
 # torque = torque_ff + kp_scale * kp * position_error + kd_scale * kd * velocity_error
 # where kp and kd are constants in joint controller
 
-Header header
+std_msgs/Header header
 
-string[]  name
+string[] name
 float64[] desired_position
 float64[] desired_velocity
 float64[] kp_scale
