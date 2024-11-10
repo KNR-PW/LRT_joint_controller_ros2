@@ -48,7 +48,7 @@ namespace pid_controller
         PidController(PidController&& other) = default;
 
         double calculateEffort(double _position_error, double _velocity_error,
-         double _feedforward_input, PidScales _pid_scales); //  Tutaj liczymy wszystko
+         double _feedforward_effort, PidScales _pid_scales); //  Tutaj liczymy wszystko
     };
 };
 #endif
