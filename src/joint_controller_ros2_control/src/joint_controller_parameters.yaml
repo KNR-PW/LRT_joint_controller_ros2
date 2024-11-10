@@ -14,17 +14,22 @@ joint_controller:
       position_max: {
         type: double,
         default_value: 0.0,
-        description: "Proportional gain for PID"
+        description: "Maximum position for joint"
       }
       position_min: {
         type: double,
         default_value: 0.0,
-        description: "Integral gain for PID"
+        description: "Minimum position for joint"
+      }
+      position_offset: {
+        type: double,
+        default_value: 0.0,
+        description: "Offset position for joint"
       }
       velocity_max: {
         type: double,
         default_value: 0.0,
-        description: "Derivative gain for PID",
+        description: "Maximum velocity for joint",
         validation: {
           gt_eq<>: 0.0,
         }
@@ -32,11 +37,20 @@ joint_controller:
       effort_max: {
         type: double,
         default_value: 0.0,
-        description: "Integrator limit.",
+        description: "Maximum effort for joint",
         validation: {
           gt_eq<>: 0.0,
         }
       }
+    
+  frequency: {
+    type: double,
+    default_value: 1.0,
+    description: "Frequency of pid controller.",
+    validation: {
+      gt<>: 0.0,
+    }
+  }
   
   command_interfaces: {
     type: string,
@@ -47,7 +61,7 @@ joint_controller:
       not_empty<>: null,
       size_gt<>: 0,
       size_lt<>: 1,
-      one_of<>: ['effort'],
+      one_of<>: [['effort']],
     }
   }
   state_interfaces: {
@@ -58,8 +72,8 @@ joint_controller:
     validation: {
       not_empty<>: null,
       size_gt<>: 0,
-      size_lt<>: 3,
-      subset_of<>: ["position", "velocity", "effort",],
+      size_lt<>: 2,
+      subset_of<>: [["position", "velocity"]],
     }
   }
   pid_gains:
@@ -76,16 +90,22 @@ joint_controller:
         type: double,
         default_value: 0.0,
         description: "Integral gain for PID",
+        validation: {
+          gt_eq<>: 0.0,
+        }
       }
       d: {
         type: double,
         default_value: 0.0,
         description: "Derivative gain for PID",
+        validation: {
+          gt_eq<>: 0.0,
+        }
       }
       ilimit: {
         type: double,
         default_value: 0.0,
-        description: "Integrator limit for PID.",
+        description: "Integrator limit for PID",
         validation: {
           gt_eq<>: 0.0,
         }

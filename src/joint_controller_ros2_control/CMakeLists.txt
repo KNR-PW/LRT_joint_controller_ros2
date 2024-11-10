@@ -30,11 +30,11 @@ generate_parameter_library(joint_controller_parameters
 
 # Joint Controller Core library //TODO: CHANGE THIS TO SEPERATE PACKAGE!
 
-add_library(joint_controller SHARED
+add_library(joint_controller_core SHARED
   src/joint_controller_core.cpp
   src/pid_controller/pid_controller.cpp
 )
-target_include_directories(joint_controller
+target_include_directories(joint_controller_core
   PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
 
@@ -51,7 +51,7 @@ target_include_directories(joint_controller_interface
 
 target_link_libraries(
   joint_controller_interface
-  PUBLIC joint_controller
+  PUBLIC joint_controller_core
   PUBLIC joint_controller_parameters
 )
 
@@ -82,10 +82,19 @@ install(
 install(TARGETS
     joint_controller_interface
     joint_controller_parameters
-  EXPORT joint_controller_ros2_control
+    joint_controller_core
+  EXPORT export_${PROJECT_NAME}
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
+)
+
+ament_export_targets(
+  export_${PROJECT_NAME} HAS_LIBRARY_TARGET
+) 
+
+ament_export_dependencies(
+  ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
 ament_package()

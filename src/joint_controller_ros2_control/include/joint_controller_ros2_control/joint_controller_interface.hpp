@@ -16,7 +16,7 @@
 #include "joint_controller_ros2_control/visibility_control.hpp"
 #include "joint_controller_parameters.hpp"
 
-namespace joint_controller_ros2_control
+namespace joint_controller_interface
 {
 
   class JointControllerInterface : public controller_interface::ChainableControllerInterface
@@ -64,17 +64,18 @@ namespace joint_controller_ros2_control
     std::shared_ptr<joint_controller_parameters::ParamListener> param_listener_; // TODO DODAJ TO
     joint_controller_parameters::Params params_;
 
+    int joint_num_;
     std::vector<std::string> joint_names_;
 
     using JointCommands = joint_controller_core::JointCommands;
     using JointStates = joint_controller_core::JointStates;
 
     std::vector<JointCommands> joint_commands_;
-    std::vector<JointStates> joint_states;
+    std::vector<JointStates> joint_states_;
 
 
     using JointController = joint_controller_core::JointController;
-    std::vector<JointController> controllers_;
+    std::vector<JointController> joint_controllers_;
     
     using JointCommandMsg = joint_controller_msgs::msg::JointCommand;
     using JointStateMsg = sensor_msgs::msg::JointState;
@@ -97,13 +98,10 @@ namespace joint_controller_ros2_control
     bool on_set_chained_mode(bool chained_mode) override;
 
     // internal methods
-    void update_parameters();
     controller_interface::CallbackReturn configure_parameters();
 
-  private:
-
+    private:
   };
-
-}  // namespace pid_controller
+};  // namespace pid_controller
 
 #endif  // PID_CONTROLLER__PID_CONTROLLER_HPP_
