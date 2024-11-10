@@ -7,10 +7,24 @@
   <maintainer email="bartlomiejk@vp.pl">bartek</maintainer>
   <license>GPL-3.0-only</license>
 
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+
+  <depend>controller_interface</depend>
+  <depend>realtime_tools</depend>
+  
+  <depend>generate_parameter_library</depend>
+  <depend>parameter_traits</depend>
+
+  <depend>sensor_msgs</depend>
+  <depend>joint_controller_msgs</depend>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
 
   <export>
     <build_type>ament_cmake</build_type>
