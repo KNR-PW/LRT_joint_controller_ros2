@@ -14,21 +14,11 @@ namespace pid_controller
         double integration_limit_ = 0;
     };
 
-    struct PidScales
-    {
-        /* Proportional and derivative scales, can be changed in every control call */
-        double proportional_scale_ = 1;
-        double derivative_scale_ = 1;
-    };
-
     class PidController
     {
         private:
 
         PidParameters pid_params_;
-
-        PidScales pid_scales_;
-
 
         /* Position integrator, updated in every control call */
         double position_integrator_;
@@ -48,7 +38,7 @@ namespace pid_controller
         PidController(PidController&& other) = default;
 
         double calculateEffort(double _position_error, double _velocity_error,
-         double _feedforward_effort, PidScales _pid_scales); //  Tutaj liczymy wszystko
+         double _feedforward_effort, double proportional_scale_ , double derivative_scale_); //  Tutaj liczymy wszystko
     };
 };
 #endif
