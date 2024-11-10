@@ -1,3 +1,0 @@
-#include "ros2_moteus_position_controller/position_controller/PositionController.hpp"
-
-using namespace position_controller;
