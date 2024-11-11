@@ -5,18 +5,18 @@ using namespace joint_controller_interface;
 JointControllerInterface::JointControllerInterface(): controller_interface::ChainableControllerInterface(){}
 controller_interface::CallbackReturn JointControllerInterface::on_init()
 {
-  try
-  {
-    param_listener_ = std::make_shared<joint_controller_parameters::ParamListener>(get_node());
-    params_ = param_listener_->get_params();
-  }
-  catch (const std::exception & e)
-  {
-    RCLCPP_FATAL(get_node()->get_logger(),
-           "Exception thrown during controller's init with message: %s \n", e.what());
-    return controller_interface::CallbackReturn::ERROR;
-  }
-  return controller_interface::CallbackReturn::SUCCESS;
+    try
+    {
+        param_listener_ = std::make_shared<joint_controller_parameters::ParamListener>(get_node());
+        params_ = param_listener_->get_params();
+    }
+    catch (const std::exception & e)
+    {
+        RCLCPP_FATAL(get_node()->get_logger(),
+            "Exception thrown during controller's init with message: %s \n", e.what());
+        return controller_interface::CallbackReturn::ERROR;
+    }
+    return controller_interface::CallbackReturn::SUCCESS;
 }
 
 controller_interface::InterfaceConfiguration JointControllerInterface::command_interface_configuration() const
@@ -62,11 +62,29 @@ controller_interface::CallbackReturn JointControllerInterface::on_cleanup(
 controller_interface::CallbackReturn JointControllerInterface::on_configure(
       const rclcpp_lifecycle::State & previous_state)
 {
-    auto ret = configure_parameters();
+    auto ret = configure_joints();
     if (ret != CallbackReturn::SUCCESS)
     {
         return ret;
     }
+
+    
+    auto subscribers_qos = rclcpp::SystemDefaultsQoS();
+    subscribers_qos.keep_last(1);
+    subscribers_qos.best_effort();
+
+    command_subscriber_ = get_node()->create_subscription<JointCommandMsg>(
+        "~/reference", subscribers_qos,
+        std::bind(&JointControllerInterface::command_callback, this, std::placeholders::_1));
+
+    std::shared_ptr<JointCommandMsg> msg = std::make_shared<JointCommandMsg>();
+    reset_controller_command_msg(msg, joint_names_);
+    input_commands_.writeFromNonRT(msg);
+
+    RCLCPP_INFO(get_node()->get_logger(), "JointController configure successfully!");
+    return controller_interface::CallbackReturn::SUCCESS;
+
+    // TODO DOKONCZ
 }
 controller_interface::CallbackReturn JointControllerInterface::on_activate(
       const rclcpp_lifecycle::State & previous_state)
@@ -82,7 +100,7 @@ controller_interface::return_type JointControllerInterface::update_and_write_com
       const rclcpp::Time & time, const rclcpp::Duration & period){}
 bool JointControllerInterface::on_set_chained_mode(bool chained_mode){}
 
-controller_interface::CallbackReturn JointControllerInterface::configure_parameters()
+controller_interface::CallbackReturn JointControllerInterface::configure_joints()
 {
     if(params_.joint_names.size() != params_.pid_gains.joint_names_map.size())
     {
@@ -110,6 +128,9 @@ controller_interface::CallbackReturn JointControllerInterface::configure_paramet
     for(int i = 0; i < joint_num_; ++i)
     {
         joint_names_.push_back(params_.joint_names[i]);
+        joint_commands_.emplace(params_.joint_names[i], JointCommands());
+        joint_states_.emplace(params_.joint_names[i], JointStates());
+
 
         joint_controller_core::JointParameters joint_params;
         auto listener_joint_param = params_.joint_params.joint_names_map[params_.joint_names[i]];
@@ -139,3 +160,18 @@ std::vector<hardware_interface::CommandInterface> JointControllerInterface::on_e
 {
 }
 std::vector<hardware_interface::StateInterface> JointControllerInterface::on_export_state_interfaces(){}
+
+void JointControllerInterface::reset_controller_command_msg(
+  const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names)
+{
+    _msg->name = _joint_names;
+    _msg->header.frame_id = 0;
+    _msg->header.stamp.sec = 0;
+    _msg->header.stamp.nanosec = 0;
+    _msg->desired_position.resize(_joint_names.size(), std::numeric_limits<double>::quiet_NaN());
+    _msg->desired_velocity.resize(_joint_names.size(), std::numeric_limits<double>::quiet_NaN());
+    _msg->kp_scale.resize(_joint_names.size(), 1);
+    _msg->kd_scale..resize(_joint_names.size(), 1);
+    _msg->feedforward_effort  _msg->kp_scale.resize(_joint_names.size(),
+     std::numeric_limits<double>::quiet_NaN());
+}

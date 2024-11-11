@@ -70,8 +70,8 @@ namespace joint_controller_interface
     using JointCommands = joint_controller_core::JointCommands;
     using JointStates = joint_controller_core::JointStates;
 
-    std::vector<JointCommands> joint_commands_;
-    std::vector<JointStates> joint_states_;
+    std::unordered_map<std::string, JointCommands> joint_commands_;
+    std::unordered_map<std::string, JointStates> joint_states_;
 
 
     using JointController = joint_controller_core::JointController;
@@ -81,14 +81,8 @@ namespace joint_controller_interface
     using JointStateMsg = sensor_msgs::msg::JointState;
 
     // Command subscribers and Controller State publisher
-    rclcpp::Subscription<JointCommandMsg>::SharedPtr ref_subscriber_ = nullptr;
+    rclcpp::Subscription<JointCommandMsg>::SharedPtr command_subscriber_ = nullptr;
     realtime_tools::RealtimeBuffer<std::shared_ptr<JointCommandMsg>> input_commands_;
-
-
-    using ControllerStatePublisher = realtime_tools::RealtimePublisher<JointStateMsg>;
-
-    rclcpp::Publisher<JointStateMsg>::SharedPtr j_s_publisher_;
-    std::unique_ptr<JointStateMsg> joint_state_publisher_;
 
     // override methods from ChainableControllerInterface
     std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
@@ -98,7 +92,12 @@ namespace joint_controller_interface
     bool on_set_chained_mode(bool chained_mode) override;
 
     // internal methods
-    controller_interface::CallbackReturn configure_parameters();
+    controller_interface::CallbackReturn configure_joints();
+
+    void command_callback(const std::shared_ptr<JointCommandMsg> _command_msg);
+
+    void JointControllerInterface::reset_controller_command_msg(
+      const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);
 
     private:
   };
