@@ -51,7 +51,6 @@ joint_controller:
       gt<>: 0.0,
     }
   }
-  
   command_interfaces: {
     type: string,
     default_value: "effort",
@@ -64,10 +63,22 @@ joint_controller:
       one_of<>: [['effort']],
     }
   }
+  reference_interfaces: {
+    type: string_array,
+    default_value: ["position", "velocity", "effort"],
+    description: "Name of the interfaces used by the controller getting reference commands (topics or other controllers).",
+    read_only: true,
+    validation: {
+      not_empty<>: null,
+      size_gt<>: 0,
+      size_lt<>: 3,
+      subset_of<>: [["position", "velocity", "effort", "kp_scale", "kd_scale"]],
+    }
+  }
   state_interfaces: {
     type: string_array,
     default_value: ["position", "velocity"],
-    description: "Name of the interfaces used by the controller getting hardware states and reference commands.",
+    description: "Name of the interfaces used by the controller getting hardware states.",
     read_only: true,
     validation: {
       not_empty<>: null,

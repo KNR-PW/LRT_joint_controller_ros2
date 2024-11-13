@@ -83,8 +83,6 @@ controller_interface::CallbackReturn JointControllerInterface::on_configure(
 
     RCLCPP_INFO(get_node()->get_logger(), "JointController configure successfully!");
     return controller_interface::CallbackReturn::SUCCESS;
-
-    // TODO DOKONCZ
 }
 controller_interface::CallbackReturn JointControllerInterface::on_activate(
       const rclcpp_lifecycle::State & previous_state)
@@ -158,8 +156,54 @@ controller_interface::CallbackReturn JointControllerInterface::configure_joints(
 
 std::vector<hardware_interface::CommandInterface> JointControllerInterface::on_export_reference_interfaces()
 {
+    std::vector<hardware_interface::CommandInterface> reference_interfaces;
+    reference_interfaces.reserve(params_.reference_interfaces.size() * params_.joint_names.size());
+
+    for (const auto & interface : params_.reference_interfaces)
+    {
+      for (const auto & joint_name : joint_names_)
+      {
+        if(interface == "position")
+        {
+            reference_interfaces.push_back(hardware_interface::CommandInterface(
+                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[joint_name].desired_position_));
+        }
+        else if(interface == "velocity")
+        {
+            reference_interfaces.push_back(hardware_interface::CommandInterface(
+                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[joint_name].desired_velocity_));
+        }
+        else if(interface == "effort")
+        {
+            reference_interfaces.push_back(hardware_interface::CommandInterface(
+                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[joint_name].feedforward_effort_));
+        }
+        else if(interface == "kp_scale")
+        {
+            reference_interfaces.push_back(hardware_interface::CommandInterface(
+                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[joint_name].kp_scale_));
+        }
+        else if(interface == "kd_scale")
+        {
+            reference_interfaces.push_back(hardware_interface::CommandInterface(
+                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[joint_name].kd_scale_));
+        }
+        else
+        {
+            RCLCPP_FATAL(get_node()->get_logger(),
+                "Exception thrown during controller's reference export, not suppossed to happen lol\n");
+        }
+      }
+    }
+
+    return reference_interfaces;
 }
-std::vector<hardware_interface::StateInterface> JointControllerInterface::on_export_state_interfaces(){}
+std::vector<hardware_interface::StateInterface> JointControllerInterface::on_export_state_interfaces()
+{
+    /* No state interfaces exported, it is a one way controller! */
+    std::vector<hardware_interface::CommandInterface> state_interfaces;
+    return state_interfaces;
+}
 
 void JointControllerInterface::reset_controller_command_msg(
   const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names)
