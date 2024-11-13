@@ -25,8 +25,8 @@ namespace joint_controller_core
     {
         double desired_position_ = 0;   /* [radians] or [m]*/
         double desired_velocity_ = 0;   /* [radians/s] or [m/s]*/
-        double kp_scale_ = 0;           
-        double kd_scale_ = 0;
+        double kp_scale_ = 1;           
+        double kd_scale_ = 1;
         double feedforward_effort_ = 0; /* [Nm] or [N]*/
     };
 
