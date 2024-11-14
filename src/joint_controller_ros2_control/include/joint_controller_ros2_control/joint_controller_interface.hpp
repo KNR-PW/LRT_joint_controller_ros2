@@ -8,6 +8,7 @@
 #include "joint_controller_msgs/msg/joint_command.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "controller_interface/chainable_controller_interface.hpp"
+#include "controller_interface/controller_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "realtime_tools/realtime_buffer.h"
 #include "realtime_tools/realtime_publisher.h"
@@ -84,6 +85,15 @@ namespace joint_controller_interface
     rclcpp::Subscription<JointCommandMsg>::SharedPtr command_subscriber_ = nullptr;
     realtime_tools::RealtimeBuffer<std::shared_ptr<JointCommandMsg>> input_commands_;
 
+    bool has_kp_scale_interface_ = false;
+    bool has_kd_scale_interface_ = false;
+
+    std::vector<std::string> default_state_interfaces_{"position", "velocity"};
+    std::vector<std::string> command_interface_joint_command_map_{"effort"};
+
+    std::unordered_map<std::string, std::unordered_map<std::string, size_t>> state_interface_joint_state_map_;
+    std::unordered_map<std::string, std::unordered_map<std::string, size_t>> command_interface_joint_command_map_;
+    
     // override methods from ChainableControllerInterface
     std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
@@ -95,6 +105,9 @@ namespace joint_controller_interface
     controller_interface::CallbackReturn configure_joints();
 
     void command_callback(const std::shared_ptr<JointCommandMsg> _command_msg);
+
+    controller_interface::CallbackReturn get_state_interfaces_map();
+    controller_interface::CallbackReturn get_command_interfaces_map();
 
     void JointControllerInterface::reset_controller_command_msg(
       const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);

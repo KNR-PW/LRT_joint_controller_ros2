@@ -56,6 +56,8 @@ controller_interface::CallbackReturn JointControllerInterface::on_cleanup(
     joint_commands_.clear();
     joint_states_.clear();
     joint_controllers_.clear();
+    state_interface_joint_state_map_.clear();
+
     return CallbackReturn::SUCCESS;
 }
 
@@ -74,7 +76,7 @@ controller_interface::CallbackReturn JointControllerInterface::on_configure(
     subscribers_qos.best_effort();
 
     command_subscriber_ = get_node()->create_subscription<JointCommandMsg>(
-        "~/reference", subscribers_qos,
+        "~/joint_commands", subscribers_qos,
         std::bind(&JointControllerInterface::command_callback, this, std::placeholders::_1));
 
     std::shared_ptr<JointCommandMsg> msg = std::make_shared<JointCommandMsg>();
@@ -87,16 +89,61 @@ controller_interface::CallbackReturn JointControllerInterface::on_configure(
 controller_interface::CallbackReturn JointControllerInterface::on_activate(
       const rclcpp_lifecycle::State & previous_state)
 {
-    
+    if(get_state_interfaces_map() !=controller_interface::CallbackReturn::SUCCESS)
+    {
+        return controller_interface::CallbackReturn::FAILURE;
+    }
+
+    if(get_command_interfaces_map() !=controller_interface::CallbackReturn::SUCCESS)
+    {
+        return controller_interface::CallbackReturn::FAILURE;
+    }
+
+    reset_controller_reference_msg(*(input_commands_.readFromRT()), joint_names_);
+
+    return controller_interface::CallbackReturn::SUCCESS;
+}
+controller_interface::CallbackReturn JointControllerInterface::on_deactivate(
+    const rclcpp_lifecycle::State & previous_state)
+{
+    return controller_interface::CallbackReturn::SUCCESS;
+}
+controller_interface::return_type JointControllerInterface::update_reference_from_subscribers(
+    const rclcpp::Time & time, const rclcpp::Duration & period)
+{
+    auto current_ref = input_commands_.readFromRT();
+    JointCommandMsg& joint_command_msg = *(*current_ref);
+
+    for (int i = 0; i < joint_num_; ++i)
+    {
+        if ((!std::isnan(joint_command_msg.desired_position[i])) && (!std::isnan(joint_command_msg.desired_velocity[i]))
+            && (!std::isnan(joint_command_msg.kp_scale[i])) && (!std::isnan(joint_command_msg.kd_scale[i]))
+            && (!std::isnan(joint_command_msg.feedforward_effort[i])))
+        {
+            JointCommands& joint_command = joint_command_msg.name[i];
+            joint_command.desired_position_ = joint_command_msg.desired_position[i];
+            joint_command.desired_velocity_ = joint_command_msg.desired_velocity[i];
+            joint_command.feedforward_effort_ = joint_command_msg.feedforward_effort[i];
+            if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_command_msg.kp_scale[i];
+            if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_command_msg.kd_scale[i];
+        }
+    }
+    return controller_interface::return_type::OK;
+}
+controller_interface::return_type JointControllerInterface::update_and_write_commands(
+      const rclcpp::Time & time, const rclcpp::Duration & period)
+{
+    for(size_t i; i < joint_num_; ++i)
+    {
+        
+    }
 }
 
-controller_interface::CallbackReturn JointControllerInterface::on_deactivate(
-      const rclcpp_lifecycle::State & previous_state){}
-controller_interface::return_type JointControllerInterface::update_reference_from_subscribers(
-      const rclcpp::Time & time, const rclcpp::Duration & period){}
-controller_interface::return_type JointControllerInterface::update_and_write_commands(
-      const rclcpp::Time & time, const rclcpp::Duration & period){}
-bool JointControllerInterface::on_set_chained_mode(bool chained_mode){}
+bool JointControllerInterface::on_set_chained_mode(bool chained_mode)
+{
+    /* Always accept switch to/from chained mode */
+    return true || chained_mode;
+}
 
 controller_interface::CallbackReturn JointControllerInterface::configure_joints()
 {
@@ -114,6 +161,30 @@ controller_interface::CallbackReturn JointControllerInterface::configure_joints(
             "Size of 'joint params' (%zu) map and number or 'joint_names' (%zu) have to be the same!",
             params_.joint_params.joint_names_map.size(), params_.joint_names.size());
         return CallbackReturn::FAILURE;
+    }
+
+    if(std::find(params_.reference_interfaces.begin(), params_.reference_interfaces.end(), "kp_scale") != v.end())
+    {
+        has_kp_scale_interface_ = true;
+    }
+    else
+    {
+        for(auto& joint_command : joint_commands_)
+        {
+            joint_command.second.kp_scale_ = 1.0;
+        }
+    }
+
+    if(std::find(params_.reference_interfaces.begin(), params_.reference_interfaces.end(), "kd_scale") != v.end())
+    {
+        has_kd_scale_interface_ = true;
+    }
+    else
+    {
+        for(auto& joint_command : joint_commands_)
+        {
+            joint_command.second.kd_scale_ = 1.0;
+        }
     }
 
     joint_num_ = arams_.joint_names.size();
@@ -218,4 +289,70 @@ void JointControllerInterface::reset_controller_command_msg(
     _msg->kd_scale..resize(_joint_names.size(), 1);
     _msg->feedforward_effort  _msg->kp_scale.resize(_joint_names.size(),
      std::numeric_limits<double>::quiet_NaN());
+}
+
+controller_interface::CallbackReturn JointControllerInterface::get_state_interfaces_map()
+{
+    if (state_interfaces_.empty())
+    {
+        return controller_interface::CallbackReturn::ERROR;
+    }
+
+    for (auto state_interface_iterator = state_interfaces_.begin(); si != state_interfaces_.end(); state_interface_iterator++)
+    {
+        auto joint_name = state_interface_iterator->get_prefix_name();
+        auto interface_name = state_interface_iterator->get_interface_name();
+        size_t index = std::distance(state_interfaces_.begin(), state_interface_iterator);
+        if (state_interface_joint_state_map_.count(joint_name) == 0)
+        {
+            state_interface_joint_state_map_[joint_name] = {};
+        }
+        if(std::find(default_state_interfaces_.begin(), default_state_interfaces_.end(),
+            interface_name) != default_state_interfaces_.end())
+        {
+            state_interface_joint_state_map_[joint_name][interface_name] = index;
+        }
+    }
+
+    if(state_interface_joint_state_map_.size() != joint_num_ * default_state_interfaces_.size())
+    {
+         RCLCPP_WARN(get_node()->get_logger(),
+            "Size of state inetrface map is (%zu), but should be (%zu)",
+            state_interface_joint_state_map_.size(), joint_num_ * default_state_interfaces_.size());
+        return controller_interface::CallbackReturn::ERROR;
+    }
+    return controller_interface::CallbackReturn::SUCCESS;
+}
+
+controller_interface::CallbackReturn JointControllerInterface::get_command_interfaces_map()
+{
+    if (command_interfaces_.empty())
+    {
+        return controller_interface::CallbackReturn::ERROR;
+    }
+
+    for (auto command_interface_iterator = command_interfaces_.begin(); si != command_interfaces_.end(); command_interface_iterator ++)
+    {
+        auto joint_name = command_interface_iterator ->get_prefix_name();
+        auto interface_name = command_interface_iterator ->get_interface_name();
+        size_t index = std::distance(command_interfaces_.begin(), command_interface_iterator );
+        if (command_interface_joint_command_map_.count(joint_name) == 0)
+        {
+            command_interface_joint_command_map_[joint_name] = {};
+        }
+        if(std::find(default_command_interfaces_.begin(), default_command_interfaces_.end(),
+            interface_name) != default_command_interfaces_.end())
+        {
+            command_interface_joint_command_map_[joint_name][interface_name] = index;
+        }
+    }
+
+    if(command_interface_joint_command_map_.size() != joint_num_ * default_command_interfaces_.size())
+    {
+         RCLCPP_WARN(get_node()->get_logger(),
+            "Size of command inetrface map is (%zu), but should be (%zu)",
+            command_interface_joint_command_map_.size(), joint_num_ * default_command_interfaces_.size());
+        return controller_interface::CallbackReturn::ERROR;
+    }
+    return controller_interface::CallbackReturn::SUCCESS;
 }
