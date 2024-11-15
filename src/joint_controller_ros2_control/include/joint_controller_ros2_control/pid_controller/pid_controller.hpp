@@ -26,9 +26,9 @@ namespace pid_controller
         /* Time step (inverse of frequency)*/
         double time_step_;
 
-        double calculateProportionalEffort(double _position_error); 
+        double calculateProportionalEffort(double _position_error, double _proportional_scale); 
         double calculateIntegralEffort(double _position_error);
-        double calculateDerivativeEffort(double _velocity_error);
+        double calculateDerivativeEffort(double _velocity_error, double _derivative_scale);
 
 
         public:
@@ -38,7 +38,7 @@ namespace pid_controller
         PidController(PidController&& other) = default;
 
         double calculateEffort(double _position_error, double _velocity_error,
-         double _feedforward_effort, double proportional_scale_ , double derivative_scale_); //  Tutaj liczymy wszystko
+            double _feedforward_effort, double _proportional_scale, double _derivative_scale); //  Tutaj liczymy wszystko
     };
 };
 #endif
