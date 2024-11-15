@@ -393,3 +393,6 @@ controller_interface::CallbackReturn JointController::get_command_interfaces()
     }
     return controller_interface::CallbackReturn::SUCCESS;
 }
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(joint_controller::JointController, controller_interface::ChainableControllerInterface);
