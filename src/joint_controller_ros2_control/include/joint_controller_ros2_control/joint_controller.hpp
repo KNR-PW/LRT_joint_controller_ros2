@@ -4,6 +4,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
+
+#include "hardware_interface/types/hardware_interface_type_values.hpp"
 
 #include "joint_controller_msgs/msg/joint_command.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -17,16 +20,16 @@
 #include "joint_controller_ros2_control/visibility_control.hpp"
 #include "joint_controller_parameters.hpp"
 
-namespace joint_controller_interface
+namespace joint_controller
 {
 
-  class JointControllerInterface : public controller_interface::ChainableControllerInterface
+  class JointController : public controller_interface::ChainableControllerInterface
   {
 
     public:
 
     JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC 
-    JointControllerInterface();
+    JointController();
 
     JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC 
     controller_interface::CallbackReturn on_init() override;
@@ -65,7 +68,7 @@ namespace joint_controller_interface
     std::shared_ptr<joint_controller_parameters::ParamListener> param_listener_; // TODO DODAJ TO
     joint_controller_parameters::Params params_;
 
-    int joint_num_;
+    size_t joint_num_;
     std::vector<std::string> joint_names_;
 
     using JointCommands = joint_controller_core::JointCommands;
@@ -75,8 +78,8 @@ namespace joint_controller_interface
     std::unordered_map<std::string, JointStates> joint_states_;
 
 
-    using JointController = joint_controller_core::JointController;
-    std::vector<JointController> joint_controllers_;
+    using JointControllerCore = joint_controller_core::JointControllerCore;
+    std::vector<JointControllerCore> joint_controllers_;
     
     using JointCommandMsg = joint_controller_msgs::msg::JointCommand;
     using JointStateMsg = sensor_msgs::msg::JointState;
@@ -89,10 +92,15 @@ namespace joint_controller_interface
     bool has_kd_scale_interface_ = false;
 
     std::vector<std::string> default_state_interfaces_{"position", "velocity"};
-    std::vector<std::string> command_interface_joint_command_map_{"effort"};
+    std::vector<std::string> default_command_interface_{"effort"};
 
-    std::unordered_map<std::string, std::unordered_map<std::string, size_t>> state_interface_joint_state_map_;
-    std::unordered_map<std::string, std::unordered_map<std::string, size_t>> command_interface_joint_command_map_;
+    using loaned_command_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>>;
+    using loaned_state_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>>;
+    
+    loaned_command_interfaces_t loaned_effort_interfaces_;
+    loaned_state_interfaces_t loaned_position_interfaces_;
+    loaned_state_interfaces_t loaned_velocity_interfaces_;
+
     
     // override methods from ChainableControllerInterface
     std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
@@ -106,10 +114,10 @@ namespace joint_controller_interface
 
     void command_callback(const std::shared_ptr<JointCommandMsg> _command_msg);
 
-    controller_interface::CallbackReturn get_state_interfaces_map();
-    controller_interface::CallbackReturn get_command_interfaces_map();
+    controller_interface::CallbackReturn get_state_interfaces();
+    controller_interface::CallbackReturn get_command_interfaces();
 
-    void JointControllerInterface::reset_controller_command_msg(
+    void JointController::reset_controller_command_msg(
       const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);
 
     private:

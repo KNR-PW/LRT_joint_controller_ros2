@@ -2,6 +2,7 @@
 #define _JOINT_CONTROLLER_CORE_HPP_
 
 #include "pid_controller/pid_controller.hpp"
+#include <algorithm>
 
 namespace joint_controller_core
 {
@@ -31,7 +32,7 @@ namespace joint_controller_core
     };
 
 
-    class JointController
+    class JointControllerCore
     {
         private:
 
@@ -40,10 +41,10 @@ namespace joint_controller_core
 
         public:
 
-        JointController(JointParameters _joint_params,
+        JointControllerCore(JointParameters _joint_params,
          pid_controller::PidParameters _pid_params, double _frequency);
-        JointController(const JointController& other) = default;
-        JointController(JointController&& other) = default;
+        JointControllerCore(const JointControllerCore& other) = default;
+        JointControllerCore(JointControllerCore&& other) = default;
 
         double calculateEffort(const JointCommands& _joint_command,const JointStates& _joint_state);
         

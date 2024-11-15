@@ -59,7 +59,7 @@ joint_controller:
     validation: {
       not_empty<>: null,
       size_gt<>: 0,
-      size_lt<>: 1,
+      size_lt<>: 2,
       one_of<>: [['effort']],
     }
   }
@@ -71,7 +71,7 @@ joint_controller:
     validation: {
       not_empty<>: null,
       size_gt<>: 0,
-      size_lt<>: 3,
+      size_lt<>: 6,
       subset_of<>: [["position", "velocity", "effort", "kp_scale", "kd_scale"]],
     }
   }
@@ -83,7 +83,7 @@ joint_controller:
     validation: {
       not_empty<>: null,
       size_gt<>: 0,
-      size_lt<>: 2,
+      size_lt<>: 3,
       subset_of<>: [["position", "velocity"]],
     }
   }
