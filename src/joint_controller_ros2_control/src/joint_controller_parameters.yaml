@@ -51,15 +51,13 @@ joint_controller:
       gt<>: 0.0,
     }
   }
-  command_interfaces: {
+  command_interface: {
     type: string,
     default_value: "effort",
     description: "Name of the interfaces used by the controller for writing commands to the hardware.",
     read_only: true,
     validation: {
       not_empty<>: null,
-      size_gt<>: 0,
-      size_lt<>: 2,
       one_of<>: [['effort']],
     }
   }
@@ -70,7 +68,7 @@ joint_controller:
     read_only: true,
     validation: {
       not_empty<>: null,
-      size_gt<>: 0,
+      size_gt<>: 2,
       size_lt<>: 6,
       subset_of<>: [["position", "velocity", "effort", "kp_scale", "kd_scale"]],
     }
@@ -82,7 +80,7 @@ joint_controller:
     read_only: true,
     validation: {
       not_empty<>: null,
-      size_gt<>: 0,
+      size_gt<>: 1,
       size_lt<>: 3,
       subset_of<>: [["position", "velocity"]],
     }

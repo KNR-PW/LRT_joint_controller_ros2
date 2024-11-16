@@ -57,16 +57,15 @@ namespace joint_controller
       const rclcpp_lifecycle::State & previous_state) override;
 
     JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC 
-    controller_interface::return_type update_reference_from_subscribers(
-      const rclcpp::Time & time, const rclcpp::Duration & period) override;
+    controller_interface::return_type update_reference_from_subscribers() override; // TODO: TO ZMIENIC PRZY NOWEJ WERSJI ROS2_CONTROL
 
     JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC 
     controller_interface::return_type update_and_write_commands(
       const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
     protected:
-    std::shared_ptr<joint_controller_parameters::ParamListener> param_listener_; // TODO DODAJ TO
-    joint_controller_parameters::Params params_;
+    std::shared_ptr<joint_controller::ParamListener> param_listener_; // TODO DODAJ TO
+    joint_controller::Params params_;
 
     size_t joint_num_;
     std::vector<std::string> joint_names_;
@@ -74,8 +73,8 @@ namespace joint_controller
     using JointCommands = joint_controller_core::JointCommands;
     using JointStates = joint_controller_core::JointStates;
 
-    std::unordered_map<std::string, JointCommands> joint_commands_;
-    std::unordered_map<std::string, JointStates> joint_states_;
+    std::vector<JointCommands> joint_commands_;
+    std::vector<JointStates> joint_states_;
 
 
     using JointControllerCore = joint_controller_core::JointControllerCore;
@@ -97,15 +96,15 @@ namespace joint_controller
     using loaned_command_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>>;
     using loaned_state_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>>;
     
-    loaned_command_interfaces_t loaned_effort_interfaces_;
-    loaned_state_interfaces_t loaned_position_interfaces_;
-    loaned_state_interfaces_t loaned_velocity_interfaces_;
+    loaned_command_interfaces_t effort_command_interfaces_;
+    loaned_state_interfaces_t position_state_interfaces_;
+    loaned_state_interfaces_t velocity_state_interfaces_;
 
     
     // override methods from ChainableControllerInterface
     std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
-    std::vector<hardware_interface::StateInterface> on_export_state_interfaces() override;
+    //std::vector<hardware_interface::StateInterface> on_export_state_interfaces() override; // TODO TO DLA NOWEJ WERSJI ROS2_CONTROL
 
     bool on_set_chained_mode(bool chained_mode) override;
 
@@ -117,7 +116,7 @@ namespace joint_controller
     controller_interface::CallbackReturn get_state_interfaces();
     controller_interface::CallbackReturn get_command_interfaces();
 
-    void JointController::reset_controller_command_msg(
+    void reset_controller_command_msg(
       const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);
 
     private:

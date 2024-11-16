@@ -47,6 +47,7 @@ add_library(
   SHARED
   src/joint_controller.cpp
 )
+target_compile_features(joint_controller PUBLIC cxx_std_17)
 target_include_directories(joint_controller
   PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
