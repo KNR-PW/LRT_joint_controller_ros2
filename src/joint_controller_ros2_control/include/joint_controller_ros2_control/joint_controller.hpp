@@ -72,63 +72,68 @@ namespace joint_controller
     protected:
     std::shared_ptr<joint_controller::ParamListener> param_listener_; // TODO DODAJ TO
     joint_controller::Params params_;
-
-    size_t joint_num_;
-    std::vector<std::string> joint_names_;
-
-    using JointCommands = joint_controller_core::JointCommands;
-    using JointStates = joint_controller_core::JointStates;
-
-    std::vector<JointCommands> joint_commands_;
-    std::vector<JointStates> joint_states_;
-
-
-    using JointControllerCore = joint_controller_core::JointControllerCore;
-    std::vector<JointControllerCore> joint_controllers_;
     
-    using JointCommandMsg = joint_controller_msgs::msg::JointCommand;
-    using JointStateMsg = sensor_msgs::msg::JointState;
-
-    // Command subscribers and Controller State publisher
-    rclcpp::Subscription<JointCommandMsg>::SharedPtr command_subscriber_ = nullptr;
-    realtime_tools::RealtimeBuffer<std::shared_ptr<JointCommandMsg>> input_commands_;
-
-    bool has_kp_scale_interface_ = false;
-    bool has_kd_scale_interface_ = false;
-
-    std::vector<std::string> default_state_interfaces_{"position", "velocity"};
-    std::vector<std::string> default_command_interface_{"effort"};
-
-    using loaned_command_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>>;
-    using loaned_state_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>>;
-    
-    loaned_command_interfaces_t effort_command_interfaces_;
-    loaned_state_interfaces_t position_state_interfaces_;
-    loaned_state_interfaces_t velocity_state_interfaces_;
-
-    
-    // override methods from ChainableControllerInterface
     std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
-
 
     #ifdef ROS2_CONTROL_VER_3
     std::vector<hardware_interface::StateInterface> on_export_state_interfaces() override; 
     #endif
+
     bool on_set_chained_mode(bool chained_mode) override;
 
-    // internal methods
-    controller_interface::CallbackReturn configure_joints();
+    private:
 
-    void command_callback(const std::shared_ptr<JointCommandMsg> _command_msg);
+    /* Reset JointCommand message */
+    using JointCommandMsg = joint_controller_msgs::msg::JointCommand;
+    void reset_controller_reference_msg(
+        const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);
 
+    /* Get state and command interfaces from hardware interface */
     controller_interface::CallbackReturn get_state_interfaces();
     controller_interface::CallbackReturn get_command_interfaces();
 
-    void reset_controller_command_msg(
-      const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);
+    /* Get parameters for joints and setup JointControllerCore objects */
+    controller_interface::CallbackReturn configure_joints();
 
-    private:
+    /* Callback for subscriber */
+    void reference_callback(const std::shared_ptr<JointCommandMsg> _reference_msg);
+
+    /* Number of joints */
+    size_t joint_num_;
+
+    /* Joint names */
+    std::vector<std::string> joint_names_;
+
+    /* Joint commands and states */
+    using JointCommands = joint_controller_core::JointCommands;
+    using JointStates = joint_controller_core::JointStates;
+    std::vector<JointCommands> joint_commands_;
+    std::vector<JointStates> joint_states_;
+
+    /* For checking if kp and kd interfaces are used */
+    bool has_kp_scale_interface_ = false;
+    bool has_kd_scale_interface_ = false;
+
+    /* Controller implementation objects */
+    using JointControllerCore = joint_controller_core::JointControllerCore;
+    std::vector<JointControllerCore> joint_controllers_;
+    
+    /* Realtime subscriber */
+    rclcpp::Subscription<JointCommandMsg>::SharedPtr command_subscriber_ = nullptr;
+    realtime_tools::RealtimeBuffer<std::shared_ptr<JointCommandMsg>> input_commands_;
+
+    /* Default interfaces */
+    std::vector<std::string> default_state_interfaces_{"position", "velocity"};
+    std::vector<std::string> default_command_interface_{"effort"};
+
+    /* All loaned interfaces from hardware interface */
+    using loaned_command_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>>;
+    using loaned_state_interfaces_t = std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>>;
+    loaned_command_interfaces_t effort_command_interfaces_;
+    loaned_state_interfaces_t position_state_interfaces_;
+    loaned_state_interfaces_t velocity_state_interfaces_;
+
   };
-};  // namespace pid_controller
+};  
 
-#endif  // PID_CONTROLLER__PID_CONTROLLER_HPP_
+#endif  

@@ -74,15 +74,16 @@ controller_interface::CallbackReturn JointController::on_configure(
 
     command_subscriber_ = get_node()->create_subscription<JointCommandMsg>(
         "~/joint_commands", subscribers_qos,
-        std::bind(&JointController::command_callback, this, std::placeholders::_1));
+        std::bind(&JointController::reference_callback, this, std::placeholders::_1));
 
     std::shared_ptr<JointCommandMsg> msg = std::make_shared<JointCommandMsg>();
-    reset_controller_command_msg(msg, joint_names_);
+    reset_controller_reference_msg(msg, joint_names_);
     input_commands_.writeFromNonRT(msg);
 
     RCLCPP_INFO(get_node()->get_logger(), "JointController configure successfully!");
     return controller_interface::CallbackReturn::SUCCESS;
 }
+
 controller_interface::CallbackReturn JointController::on_activate(
       const rclcpp_lifecycle::State & previous_state)
 {
@@ -96,10 +97,11 @@ controller_interface::CallbackReturn JointController::on_activate(
         return controller_interface::CallbackReturn::FAILURE;
     }
 
-    reset_controller_command_msg(*(input_commands_.readFromRT()), joint_names_);
+    reset_controller_reference_msg(*(input_commands_.readFromRT()), joint_names_);
 
     return controller_interface::CallbackReturn::SUCCESS;
 }
+
 controller_interface::CallbackReturn JointController::on_deactivate(
     const rclcpp_lifecycle::State & previous_state)
 {
@@ -107,20 +109,22 @@ controller_interface::CallbackReturn JointController::on_deactivate(
     velocity_state_interfaces_.clear();
     effort_command_interfaces_.clear();
     release_interfaces();
+    
     return controller_interface::CallbackReturn::SUCCESS;
 }
+
 #ifdef ROS2_CONTROL_VER_3
 controller_interface::return_type JointController::update_reference_from_subscribers(
     const rclcpp::Time & time, const rclcpp::Duration & period
 )
 {
     auto current_ref = input_commands_.readFromRT();
-    JointCommandMsg& joint_command_msg = *(*current_ref);
+    JointCommandMsg& joint_reference_msg = *(*current_ref);
     
-    size_t message_size = joint_command_msg.name.size();
+    size_t message_size = joint_reference_msg.name.size();
     for(size_t i = 0; i < message_size; ++i)
     {
-        const auto& message_joint_name = joint_command_msg.name[i];
+        const auto& message_joint_name = joint_reference_msg.name[i];
         auto joint_name_iterator = std::find(joint_names_.begin(), joint_names_.end(), message_joint_name);
         if(joint_name_iterator == joint_names_.end())
         {
@@ -132,32 +136,33 @@ controller_interface::return_type JointController::update_reference_from_subscri
 
         size_t index = std::distance(joint_names_.begin(), joint_name_iterator);
 
-        if ((!std::isnan(joint_command_msg.desired_position[index])) 
-                && (!std::isnan(joint_command_msg.desired_velocity[index]))
-                && (!std::isnan(joint_command_msg.kp_scale[index])) 
-                && (!std::isnan(joint_command_msg.kd_scale[index]))
-                && (!std::isnan(joint_command_msg.feedforward_effort[index])))
+        if ((!std::isnan(joint_reference_msg.desired_position[index])) 
+                && (!std::isnan(joint_reference_msg.desired_velocity[index]))
+                && (!std::isnan(joint_reference_msg.kp_scale[index])) 
+                && (!std::isnan(joint_reference_msg.kd_scale[index]))
+                && (!std::isnan(joint_reference_msg.feedforward_effort[index])))
         {
             JointCommands& joint_command = joint_commands_[index];
-            joint_command.desired_position_ = joint_command_msg.desired_position[i];
-            joint_command.desired_velocity_ = joint_command_msg.desired_velocity[i];
-            joint_command.feedforward_effort_ = joint_command_msg.feedforward_effort[i];
-            if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_command_msg.kp_scale[i];
-            if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_command_msg.kd_scale[i];
+            joint_command.desired_position_ = joint_reference_msg.desired_position[i];
+            joint_command.desired_velocity_ = joint_reference_msg.desired_velocity[i];
+            joint_command.feedforward_effort_ = joint_reference_msg.feedforward_effort[i];
+            if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_reference_msg.kp_scale[i];
+            if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_reference_msg.kd_scale[i];
         }
     }
     return controller_interface::return_type::OK;
 }
+
 #else
 controller_interface::return_type JointController::update_reference_from_subscribers()
 {
     auto current_ref = input_commands_.readFromRT();
-    JointCommandMsg& joint_command_msg = *(*current_ref);
+    JointCommandMsg& joint_reference_msg = *(*current_ref);
     
-    size_t message_size = joint_command_msg.name.size();
+    size_t message_size = joint_reference_msg.name.size();
     for(size_t i = 0; i < message_size; ++i)
     {
-        const auto& message_joint_name = joint_command_msg.name[i];
+        const auto& message_joint_name = joint_reference_msg.name[i];
         auto joint_name_iterator = std::find(joint_names_.begin(), joint_names_.end(), message_joint_name);
         if(joint_name_iterator == joint_names_.end())
         {
@@ -169,18 +174,18 @@ controller_interface::return_type JointController::update_reference_from_subscri
 
         size_t index = std::distance(joint_names_.begin(), joint_name_iterator);
 
-        if ((!std::isnan(joint_command_msg.desired_position[index])) 
-                && (!std::isnan(joint_command_msg.desired_velocity[index]))
-                && (!std::isnan(joint_command_msg.kp_scale[index])) 
-                && (!std::isnan(joint_command_msg.kd_scale[index]))
-                && (!std::isnan(joint_command_msg.feedforward_effort[index])))
+        if ((!std::isnan(joint_reference_msg.desired_position[index])) 
+                && (!std::isnan(joint_reference_msg.desired_velocity[index]))
+                && (!std::isnan(joint_reference_msg.kp_scale[index])) 
+                && (!std::isnan(joint_reference_msg.kd_scale[index]))
+                && (!std::isnan(joint_reference_msg.feedforward_effort[index])))
         {
             JointCommands& joint_command = joint_commands_[index];
-            joint_command.desired_position_ = joint_command_msg.desired_position[i];
-            joint_command.desired_velocity_ = joint_command_msg.desired_velocity[i];
-            joint_command.feedforward_effort_ = joint_command_msg.feedforward_effort[i];
-            if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_command_msg.kp_scale[i];
-            if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_command_msg.kd_scale[i];
+            joint_command.desired_position_ = joint_reference_msg.desired_position[i];
+            joint_command.desired_velocity_ = joint_reference_msg.desired_velocity[i];
+            joint_command.feedforward_effort_ = joint_reference_msg.feedforward_effort[i];
+            if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_reference_msg.kp_scale[i];
+            if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_reference_msg.kd_scale[i];
         }
     }
     return controller_interface::return_type::OK;
@@ -276,8 +281,8 @@ controller_interface::CallbackReturn JointController::configure_joints()
         pid_params.integral_coef_ = listener_pid_param.i;
         pid_params.integration_limit_ = listener_pid_param.ilimit;
 
-        joint_controller_core::JointControllerCore joint_controller(joint_params,
-         pid_params, pid_frequency);
+        joint_controller_core::JointControllerCore joint_controller(joint_params, 
+            pid_params, pid_frequency);
         
         joint_controllers_.push_back(joint_controller);
     }
@@ -291,42 +296,41 @@ std::vector<hardware_interface::CommandInterface> JointController::on_export_ref
 
     for (const auto & interface : params_.reference_interfaces)
     {
-      for (size_t i; i < joint_num_; ++i)
-      {
-        const auto& joint_name = joint_names_[i];
-        if(interface == hardware_interface::HW_IF_POSITION)
+        for (size_t i; i < joint_num_; ++i)
         {
-            reference_interfaces.push_back(hardware_interface::CommandInterface(
-                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].desired_position_));
+            const auto& joint_name = joint_names_[i];
+            if(interface == hardware_interface::HW_IF_POSITION)
+            {
+                reference_interfaces.push_back(hardware_interface::CommandInterface(
+                    get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].desired_position_));
+            }
+            else if(interface == hardware_interface::HW_IF_VELOCITY)
+            {
+                reference_interfaces.push_back(hardware_interface::CommandInterface(
+                    get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].desired_velocity_));
+            }
+            else if(interface == hardware_interface::HW_IF_EFFORT)
+            {
+                reference_interfaces.push_back(hardware_interface::CommandInterface(
+                    get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].feedforward_effort_));
+            }
+            else if(interface == "kp_scale")
+            {
+                reference_interfaces.push_back(hardware_interface::CommandInterface(
+                    get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].kp_scale_));
+            }
+            else if(interface == "kd_scale")
+            {
+                reference_interfaces.push_back(hardware_interface::CommandInterface(
+                    get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].kd_scale_));
+            }
+            else
+            {
+                RCLCPP_FATAL(get_node()->get_logger(),
+                    "Exception thrown during controller's reference export, not suppossed to happen lol\n");
+            }
         }
-        else if(interface == hardware_interface::HW_IF_VELOCITY)
-        {
-            reference_interfaces.push_back(hardware_interface::CommandInterface(
-                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].desired_velocity_));
-        }
-        else if(interface == hardware_interface::HW_IF_EFFORT)
-        {
-            reference_interfaces.push_back(hardware_interface::CommandInterface(
-                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].feedforward_effort_));
-        }
-        else if(interface == "kp_scale")
-        {
-            reference_interfaces.push_back(hardware_interface::CommandInterface(
-                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].kp_scale_));
-        }
-        else if(interface == "kd_scale")
-        {
-            reference_interfaces.push_back(hardware_interface::CommandInterface(
-                get_node()->get_name(), joint_name + "/" + interface, &joint_commands_[i].kd_scale_));
-        }
-        else
-        {
-            RCLCPP_FATAL(get_node()->get_logger(),
-                "Exception thrown during controller's reference export, not suppossed to happen lol\n");
-        }
-      }
     }
-
     return reference_interfaces;
 }
 #ifdef ROS2_CONTROL_VER_3
@@ -337,7 +341,8 @@ std::vector<hardware_interface::StateInterface> JointController::on_export_state
     return state_interfaces;
 }
 #endif
-void JointController::reset_controller_command_msg(
+
+void JointController::reset_controller_reference_msg(
   const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names)
 {
     _msg->name = _joint_names;
@@ -361,8 +366,8 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
     {
         std::vector<size_t> position_interface_indexes;
         std::vector<size_t> velocity_interface_indexes;
-         for (auto state_interface_iterator = state_interfaces_.begin();
-        state_interface_iterator != state_interfaces_.end(); state_interface_iterator++)
+        for (auto state_interface_iterator = state_interfaces_.begin();
+            state_interface_iterator != state_interfaces_.end(); state_interface_iterator++)
         {
             const auto& joint_name = state_interface_iterator->get_prefix_name();
             auto interface_name = state_interface_iterator->get_interface_name();
@@ -392,14 +397,14 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
 
     if(position_state_interfaces_.size() != joint_num_)
     {
-         RCLCPP_WARN(get_node()->get_logger(),
+        RCLCPP_WARN(get_node()->get_logger(),
             "Size of position state inetrface map is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
     if(velocity_state_interfaces_.size() != joint_num_)
     {
-         RCLCPP_WARN(get_node()->get_logger(),
+        RCLCPP_WARN(get_node()->get_logger(),
             "Size of position state inetrface map is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
@@ -417,8 +422,8 @@ controller_interface::CallbackReturn JointController::get_command_interfaces()
     for (size_t i = 0; i < joint_num_; ++i)
     {
         std::vector<size_t> effort_interface_indexes;
-         for (auto command_interface_iterator = command_interfaces_.begin();
-        command_interface_iterator != command_interfaces_.end(); command_interface_iterator++)
+        for (auto command_interface_iterator = command_interfaces_.begin();
+            command_interface_iterator != command_interfaces_.end(); command_interface_iterator++)
         {
             auto joint_name = command_interface_iterator->get_prefix_name();
             auto interface_name = command_interface_iterator->get_interface_name();
@@ -438,7 +443,7 @@ controller_interface::CallbackReturn JointController::get_command_interfaces()
     }
     if(effort_command_interfaces_.size() != joint_num_)
     {
-         RCLCPP_WARN(get_node()->get_logger(),
+        RCLCPP_WARN(get_node()->get_logger(),
             "Size of effort command inetrface map is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
@@ -446,26 +451,26 @@ controller_interface::CallbackReturn JointController::get_command_interfaces()
     return controller_interface::CallbackReturn::SUCCESS;
 }
 
-void JointController::command_callback(const std::shared_ptr<JointCommandMsg> _command_msg)
+void JointController::reference_callback(const std::shared_ptr<JointCommandMsg> _reference_msg)
 {
-    if(_command_msg->name.empty() && _command_msg->desired_position.size() == joint_num_)
+    if(_reference_msg->name.empty() && _reference_msg->desired_position.size() == joint_num_)
     {
         RCLCPP_WARN(
             get_node()->get_logger(),
             "Command massage does not have joint names defined. "
             "Assuming that values have order as defined joint names");
-        auto ref_msg = _command_msg;
+        auto ref_msg = _reference_msg;
         ref_msg->name = joint_names_;
     }
-    if(_command_msg->name.size() != joint_num_ 
-        || _command_msg->desired_position.size() != joint_num_)
+    if(_reference_msg->name.size() != joint_num_ 
+        || _reference_msg->desired_position.size() != joint_num_)
     {
-      RCLCPP_WARN(
-        get_node()->get_logger(),
-        "Size of input joint names (%zu) and/or values (%zu) is not matching the expected size (%zu).",
-        _command_msg->name.size(), _command_msg->desired_position.size(), joint_names_.size());
+        RCLCPP_WARN(
+            get_node()->get_logger(),
+            "Size of input joint names (%zu) and/or values (%zu) is not matching the expected size (%zu).",
+            _reference_msg->name.size(), _reference_msg->desired_position.size(), joint_names_.size());
     }
-    input_commands_.writeFromNonRT(_command_msg);
+    input_commands_.writeFromNonRT(_reference_msg);
 }
 
 #include <pluginlib/class_list_macros.hpp>
