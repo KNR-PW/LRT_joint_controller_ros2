@@ -16,7 +16,7 @@
 #include "realtime_tools/realtime_buffer.h"
 #include "realtime_tools/realtime_publisher.h"
 
-#include "joint_controller_ros2_control/joint_controller_core.hpp"
+#include "joint_controller_ros2_control/joint_controller_core/joint_controller_core.hpp"
 #include "joint_controller_ros2_control/visibility_control.hpp"
 #include "joint_controller_parameters.hpp"
 
@@ -56,8 +56,14 @@ namespace joint_controller
     controller_interface::CallbackReturn on_deactivate(
       const rclcpp_lifecycle::State & previous_state) override;
 
-    JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC 
-    controller_interface::return_type update_reference_from_subscribers() override; // TODO: TO ZMIENIC PRZY NOWEJ WERSJI ROS2_CONTROL
+    #ifdef ROS2_CONTROL_VER_3
+    JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC
+    controller_interface::return_type update_reference_from_subscribers(
+      const rclcpp::Time & time, const rclcpp::Duration & period) override;
+    #else
+    JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC
+    controller_interface::return_type update_reference_from_subscribers() override; 
+    #endif
 
     JOINT_CONTROLLER_INTERFACE__VISIBILITY_PUBLIC 
     controller_interface::return_type update_and_write_commands(
@@ -104,8 +110,10 @@ namespace joint_controller
     // override methods from ChainableControllerInterface
     std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
-    //std::vector<hardware_interface::StateInterface> on_export_state_interfaces() override; // TODO TO DLA NOWEJ WERSJI ROS2_CONTROL
 
+    #ifdef ROS2_CONTROL_VER_3
+    std::vector<hardware_interface::StateInterface> on_export_state_interfaces() override; 
+    #endif
     bool on_set_chained_mode(bool chained_mode) override;
 
     // internal methods

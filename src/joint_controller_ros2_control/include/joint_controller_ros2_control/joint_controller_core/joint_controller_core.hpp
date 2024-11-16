@@ -1,7 +1,7 @@
 #ifndef _JOINT_CONTROLLER_CORE_HPP_
 #define _JOINT_CONTROLLER_CORE_HPP_
 
-#include "pid_controller/pid_controller.hpp"
+#include "joint_controller_ros2_control/pid_controller/pid_controller.hpp"
 #include <algorithm>
 
 namespace joint_controller_core
@@ -36,7 +36,10 @@ namespace joint_controller_core
     {
         private:
 
+        /* Joint parameters */
         JointParameters joint_params_;
+
+        /* Internal PID controller parameters */
         pid_controller::PidController pid_controller_;
 
         public:
@@ -46,6 +49,7 @@ namespace joint_controller_core
         JointControllerCore(const JointControllerCore& other) = default;
         JointControllerCore(JointControllerCore&& other) = default;
 
+        /* Effort calculation */
         double calculateEffort(const JointCommands& _joint_command,const JointStates& _joint_state);
         
     };

@@ -7,6 +7,12 @@ endif()
 
 # find dependencies
 
+# SUPPORT FOR ROS2_CONTROL VERSION 3.0.0
+if(NOT controller_manager_VERSION VERSION_LESS "3.0.0")
+    add_definitions(-DROS2_CONTROL_VERSION_3)
+    message(STATUS "ros2_control version 3.0.0.")
+endif()
+
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   pluginlib
   rclcpp 
@@ -31,7 +37,7 @@ generate_parameter_library(joint_controller_parameters
 # Joint Controller Core library //TODO: CHANGE THIS TO SEPERATE PACKAGE!
 
 add_library(joint_controller_core SHARED
-  src/joint_controller_core.cpp
+  src/joint_controller_core/joint_controller_core.cpp
   src/pid_controller/pid_controller.cpp
 )
 target_compile_features(joint_controller_core PRIVATE cxx_std_17)

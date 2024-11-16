@@ -1,4 +1,4 @@
-#include "joint_controller_ros2_control/joint_controller_core.hpp"
+#include "joint_controller_ros2_control/joint_controller_core/joint_controller_core.hpp"
 
 using namespace joint_controller_core;
 
