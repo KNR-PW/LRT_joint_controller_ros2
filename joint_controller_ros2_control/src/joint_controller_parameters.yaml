@@ -1,4 +1,12 @@
 joint_controller:
+  frequency: {
+    type: double,
+    default_value: 1.0,
+    description: "Frequency of pid controller.",
+    validation: {
+      gt<>: 0.0,
+    }
+  }
   joint_names: {
     type: string_array,
     default_value: [],
@@ -42,15 +50,6 @@ joint_controller:
           gt_eq<>: 0.0,
         }
       }
-    
-  frequency: {
-    type: double,
-    default_value: 1.0,
-    description: "Frequency of pid controller.",
-    validation: {
-      gt<>: 0.0,
-    }
-  }
   command_interface: {
     type: string,
     default_value: "effort",

@@ -99,6 +99,14 @@ install(TARGETS
   LIBRARY DESTINATION lib
 )
 
+install(DIRECTORY 
+  test/urdf
+  test/bringup/launch
+  test/bringup/config
+  test/worlds 
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_export_targets(
   export_${PROJECT_NAME} HAS_LIBRARY_TARGET
 ) 

@@ -62,11 +62,14 @@ controller_interface::CallbackReturn JointController::on_cleanup(
 controller_interface::CallbackReturn JointController::on_configure(
       const rclcpp_lifecycle::State & previous_state)
 {
+    
     auto ret = configure_joints();
     if (ret != CallbackReturn::SUCCESS)
     {
         return ret;
     }
+
+    //reference_interfaces_.resize(joint_num_ * 5, std::numeric_limits<double>::quiet_NaN());
 
     auto subscribers_qos = rclcpp::SystemDefaultsQoS();
     subscribers_qos.keep_last(1);
@@ -296,7 +299,7 @@ std::vector<hardware_interface::CommandInterface> JointController::on_export_ref
 
     for (const auto & interface : params_.reference_interfaces)
     {
-        for (size_t i; i < joint_num_; ++i)
+        for (size_t i = 0; i < joint_num_; ++i)
         {
             const auto& joint_name = joint_names_[i];
             if(interface == hardware_interface::HW_IF_POSITION)
@@ -331,6 +334,7 @@ std::vector<hardware_interface::CommandInterface> JointController::on_export_ref
             }
         }
     }
+    reference_interfaces_.resize(joint_names_.size() * params_.reference_interfaces.size(), std::numeric_limits<double>::quiet_NaN());
     return reference_interfaces;
 }
 #ifdef ROS2_CONTROL_VER_3
@@ -372,6 +376,7 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
             const auto& joint_name = state_interface_iterator->get_prefix_name();
             auto interface_name = state_interface_iterator->get_interface_name();
             size_t index = std::distance(state_interfaces_.begin(), state_interface_iterator);
+            std::cout << joint_name << "/" << interface_name << ": " << index << std::endl;
             if(joint_names_[i] == joint_name)
             {
                 if(interface_name == hardware_interface::HW_IF_POSITION)
@@ -380,7 +385,7 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
                 }
                 else if(interface_name == hardware_interface::HW_IF_VELOCITY)
                 {
-                    position_interface_indexes.push_back(index);
+                    velocity_interface_indexes.push_back(index);
                 }
             }
         }
@@ -398,14 +403,14 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
     if(position_state_interfaces_.size() != joint_num_)
     {
         RCLCPP_WARN(get_node()->get_logger(),
-            "Size of position state inetrface map is (%zu), but should be (%zu)",
+            "Size of position state inetrface vector is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
     if(velocity_state_interfaces_.size() != joint_num_)
     {
         RCLCPP_WARN(get_node()->get_logger(),
-            "Size of position state inetrface map is (%zu), but should be (%zu)",
+            "Size of position state inetrface vector is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
