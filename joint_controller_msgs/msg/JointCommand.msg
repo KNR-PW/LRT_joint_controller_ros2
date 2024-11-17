@@ -5,8 +5,9 @@
 # constants for a PD controller.
 #
 # Applied joint torque is calculated as follows:
-# effort = feedforward_effort + kp_scale * kp * position_error + kd_scale * kd * velocity_error
-# where kp and kd are constants in joint controller
+# effort = feedforward_effort + kp_scale * kp * position_error 
+# + kd_scale * kd * velocity_error + ki * integration_error 
+# where kp, kd and ki are constants in joint controller parameters
 
 std_msgs/Header header
 

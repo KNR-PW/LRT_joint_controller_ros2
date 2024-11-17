@@ -198,12 +198,13 @@ controller_interface::return_type JointController::update_reference_from_subscri
 controller_interface::return_type JointController::update_and_write_commands(
       const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-    for(size_t i; i < joint_num_; ++i)
+    for(size_t i = 0; i < joint_num_; ++i)
     {
         joint_states_[i].position_ = position_state_interfaces_[i].get().get_value();
         joint_states_[i].velocity_ = velocity_state_interfaces_[i].get().get_value();
 
         double torque = joint_controllers_[i].calculateEffort(joint_commands_[i], joint_states_[i]);
+        std::cout << "Torque: " << torque << std::endl;
         effort_command_interfaces_[i].get().set_value(torque);
     }
     return controller_interface::return_type::OK;
