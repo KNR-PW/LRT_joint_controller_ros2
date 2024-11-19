@@ -29,6 +29,7 @@ controller_interface::InterfaceConfiguration JointController::command_interface_
     {
         command_interfaces_config.names.push_back(joint_name + "/" + params_.command_interface);
     }
+    RCLCPP_INFO(get_node()->get_logger(), "Command interfaces for JointController configured successfully!");
     return command_interfaces_config;
 }
 
@@ -45,7 +46,7 @@ controller_interface::InterfaceConfiguration JointController::state_interface_co
             state_interfaces_config.names.push_back(joint_name + "/" + interface);
         }
     }
-
+    RCLCPP_INFO(get_node()->get_logger(), "State interfaces for JointController configured successfully!");
     return state_interfaces_config;
 }
 
@@ -56,6 +57,8 @@ controller_interface::CallbackReturn JointController::on_cleanup(
     joint_commands_.clear();
     joint_states_.clear();
     joint_controllers_.clear();
+    
+    RCLCPP_INFO(get_node()->get_logger(), "JointController cleaned successfully!");
     return CallbackReturn::SUCCESS;
 }
 
@@ -69,8 +72,6 @@ controller_interface::CallbackReturn JointController::on_configure(
         return ret;
     }
 
-    //reference_interfaces_.resize(joint_num_ * 5, std::numeric_limits<double>::quiet_NaN());
-
     auto subscribers_qos = rclcpp::SystemDefaultsQoS();
     subscribers_qos.keep_last(1);
     subscribers_qos.best_effort();
@@ -83,19 +84,19 @@ controller_interface::CallbackReturn JointController::on_configure(
     reset_controller_reference_msg(msg, joint_names_);
     input_commands_.writeFromNonRT(msg);
 
-    RCLCPP_INFO(get_node()->get_logger(), "JointController configure successfully!");
+    RCLCPP_INFO(get_node()->get_logger(), "JointController configured successfully!");
     return controller_interface::CallbackReturn::SUCCESS;
 }
 
 controller_interface::CallbackReturn JointController::on_activate(
       const rclcpp_lifecycle::State & previous_state)
 {
-    if(get_state_interfaces() !=controller_interface::CallbackReturn::SUCCESS)
+    if(get_state_interfaces() != controller_interface::CallbackReturn::SUCCESS)
     {
         return controller_interface::CallbackReturn::FAILURE;
     }
 
-    if(get_command_interfaces() !=controller_interface::CallbackReturn::SUCCESS)
+    if(get_command_interfaces() != controller_interface::CallbackReturn::SUCCESS)
     {
         return controller_interface::CallbackReturn::FAILURE;
     }
@@ -161,7 +162,6 @@ controller_interface::return_type JointController::update_reference_from_subscri
 {
     auto current_ref = input_commands_.readFromRT();
     JointCommandMsg& joint_reference_msg = *(*current_ref);
-    
     size_t message_size = joint_reference_msg.name.size();
     for(size_t i = 0; i < message_size; ++i)
     {
@@ -204,7 +204,6 @@ controller_interface::return_type JointController::update_and_write_commands(
         joint_states_[i].velocity_ = velocity_state_interfaces_[i].get().get_value();
 
         double torque = joint_controllers_[i].calculateEffort(joint_commands_[i], joint_states_[i]);
-        std::cout << "Torque: " << torque << std::endl;
         effort_command_interfaces_[i].get().set_value(torque);
     }
     return controller_interface::return_type::OK;
@@ -213,6 +212,7 @@ controller_interface::return_type JointController::update_and_write_commands(
 bool JointController::on_set_chained_mode(bool chained_mode)
 {
     /* Always accept switch to/from chained mode */
+    
     return true || chained_mode;
 }
 
@@ -377,7 +377,6 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
             const auto& joint_name = state_interface_iterator->get_prefix_name();
             auto interface_name = state_interface_iterator->get_interface_name();
             size_t index = std::distance(state_interfaces_.begin(), state_interface_iterator);
-            std::cout << joint_name << "/" << interface_name << ": " << index << std::endl;
             if(joint_names_[i] == joint_name)
             {
                 if(interface_name == hardware_interface::HW_IF_POSITION)
@@ -415,6 +414,8 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
+
+    RCLCPP_INFO(get_node()->get_logger(), "State interfaces for JointController sorted successfully!");
     return controller_interface::CallbackReturn::SUCCESS;
 }
 
@@ -454,28 +455,35 @@ controller_interface::CallbackReturn JointController::get_command_interfaces()
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
+
+    RCLCPP_INFO(get_node()->get_logger(), "Command interfaces for JointController sorted successfully!");
     return controller_interface::CallbackReturn::SUCCESS;
 }
 
 void JointController::reference_callback(const std::shared_ptr<JointCommandMsg> _reference_msg)
 {
-    if(_reference_msg->name.empty() && _reference_msg->desired_position.size() == joint_num_)
+    if(_reference_msg->desired_position.size() != joint_num_
+        || _reference_msg->desired_velocity.size() != joint_num_
+        || _reference_msg->kp_scale.size() != joint_num_
+        || _reference_msg->kd_scale.size() != joint_num_
+        || _reference_msg->feedforward_effort.size() != joint_num_)
+    {
+        RCLCPP_WARN(
+            get_node()->get_logger(),
+            "Size of input joint names (%zu) and/or values is not matching the expected size (%zu).",
+            _reference_msg->name.size(), joint_names_.size());
+            return;
+    }
+
+    if(_reference_msg->name.empty())
     {
         RCLCPP_WARN(
             get_node()->get_logger(),
             "Command massage does not have joint names defined. "
             "Assuming that values have order as defined joint names");
-        auto ref_msg = _reference_msg;
-        ref_msg->name = joint_names_;
+        _reference_msg->name = joint_names_;
     }
-    if(_reference_msg->name.size() != joint_num_ 
-        || _reference_msg->desired_position.size() != joint_num_)
-    {
-        RCLCPP_WARN(
-            get_node()->get_logger(),
-            "Size of input joint names (%zu) and/or values (%zu) is not matching the expected size (%zu).",
-            _reference_msg->name.size(), _reference_msg->desired_position.size(), joint_names_.size());
-    }
+
     input_commands_.writeFromNonRT(_reference_msg);
 }
 

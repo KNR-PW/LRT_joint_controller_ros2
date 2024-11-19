@@ -27,6 +27,6 @@ joint_controller:
     pid_gains:
       body_1_joint:
         p: 1.0
-        d: 0.0
+        d: 0.5
         i: 0.0
         ilimit: 1.0
