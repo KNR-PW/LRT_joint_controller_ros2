@@ -5,6 +5,7 @@ using namespace joint_controller;
 JointController::JointController(): controller_interface::ChainableControllerInterface(){}
 controller_interface::CallbackReturn JointController::on_init()
 {
+    /* Get parameter listener and parameters structure */
     try
     {
         param_listener_ = std::make_shared<joint_controller::ParamListener>(get_node());
@@ -21,6 +22,7 @@ controller_interface::CallbackReturn JointController::on_init()
 
 controller_interface::InterfaceConfiguration JointController::command_interface_configuration() const
 {
+    /* Get all loaned command interfaces used by controller from hardware inetrface */
     controller_interface::InterfaceConfiguration command_interfaces_config;
     command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
@@ -35,6 +37,7 @@ controller_interface::InterfaceConfiguration JointController::command_interface_
 
 controller_interface::InterfaceConfiguration JointController::state_interface_configuration() const
 {
+    /* Get all loaned state interfaces used by controller from hardware inetrface */
     controller_interface::InterfaceConfiguration state_interfaces_config;
 
     state_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
@@ -53,6 +56,7 @@ controller_interface::InterfaceConfiguration JointController::state_interface_co
 controller_interface::CallbackReturn JointController::on_cleanup(
       const rclcpp_lifecycle::State & previous_state)
 {
+    /* Clean up all controll structures when controller is terminated */
     joint_names_.clear();
     joint_commands_.clear();
     joint_states_.clear();
@@ -65,7 +69,7 @@ controller_interface::CallbackReturn JointController::on_cleanup(
 controller_interface::CallbackReturn JointController::on_configure(
       const rclcpp_lifecycle::State & previous_state)
 {
-    
+    /* Creating joint controllers, reference subscriber and buffer for reference messages */
     auto ret = configure_joints();
     if (ret != CallbackReturn::SUCCESS)
     {
@@ -91,12 +95,13 @@ controller_interface::CallbackReturn JointController::on_configure(
 controller_interface::CallbackReturn JointController::on_activate(
       const rclcpp_lifecycle::State & previous_state)
 {
-    if(get_state_interfaces() != controller_interface::CallbackReturn::SUCCESS)
+    /* Add all loaned state and command interfaces to sorted vectors */
+    if(sort_state_interfaces() != controller_interface::CallbackReturn::SUCCESS)
     {
         return controller_interface::CallbackReturn::FAILURE;
     }
 
-    if(get_command_interfaces() != controller_interface::CallbackReturn::SUCCESS)
+    if(sort_command_interfaces() != controller_interface::CallbackReturn::SUCCESS)
     {
         return controller_interface::CallbackReturn::FAILURE;
     }
@@ -109,6 +114,7 @@ controller_interface::CallbackReturn JointController::on_activate(
 controller_interface::CallbackReturn JointController::on_deactivate(
     const rclcpp_lifecycle::State & previous_state)
 {
+    /* Remove all loaned command and state interfaces from structures and release them*/
     position_state_interfaces_.clear();
     velocity_state_interfaces_.clear();
     effort_command_interfaces_.clear();
@@ -160,6 +166,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
 #else
 controller_interface::return_type JointController::update_reference_from_subscribers()
 {
+    /* Update reference commands from message */
     auto current_ref = input_commands_.readFromRT();
     JointCommandMsg& joint_reference_msg = *(*current_ref);
     size_t message_size = joint_reference_msg.name.size();
@@ -198,6 +205,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
 controller_interface::return_type JointController::update_and_write_commands(
       const rclcpp::Time & time, const rclcpp::Duration & period)
 {
+    /* Get current state and send commands to loaned comannd interfaces */
     for(size_t i = 0; i < joint_num_; ++i)
     {
         joint_states_[i].position_ = position_state_interfaces_[i].get().get_value();
@@ -212,12 +220,13 @@ controller_interface::return_type JointController::update_and_write_commands(
 bool JointController::on_set_chained_mode(bool chained_mode)
 {
     /* Always accept switch to/from chained mode */
-    
+
     return true || chained_mode;
 }
 
 controller_interface::CallbackReturn JointController::configure_joints()
 {
+    /* Create all joint controllers and important joint parameters */
     if(params_.joint_names.size() != params_.pid_gains.joint_names_map.size())
     {
         RCLCPP_FATAL(get_node()->get_logger(),
@@ -295,6 +304,7 @@ controller_interface::CallbackReturn JointController::configure_joints()
 
 std::vector<hardware_interface::CommandInterface> JointController::on_export_reference_interfaces()
 {
+    /* Export reference interfaces for other controllers to use */
     std::vector<hardware_interface::CommandInterface> reference_interfaces;
     reference_interfaces.reserve(params_.reference_interfaces.size() * params_.joint_names.size());
 
@@ -350,6 +360,7 @@ std::vector<hardware_interface::StateInterface> JointController::on_export_state
 void JointController::reset_controller_reference_msg(
   const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names)
 {
+    /* Reset all values in message */
     _msg->name = _joint_names;
     _msg->header.frame_id = "";
     _msg->header.stamp.sec = 0;
@@ -361,8 +372,9 @@ void JointController::reset_controller_reference_msg(
     _msg->feedforward_effort.resize(_joint_names.size(), std::numeric_limits<double>::quiet_NaN());
 }
 
-controller_interface::CallbackReturn JointController::get_state_interfaces()
+controller_interface::CallbackReturn JointController::sort_state_interfaces()
 {
+    /* Add all loaned state interfaces to internal controller structures */
     if (state_interfaces_.empty())
     {
         return controller_interface::CallbackReturn::ERROR;
@@ -419,8 +431,9 @@ controller_interface::CallbackReturn JointController::get_state_interfaces()
     return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn JointController::get_command_interfaces()
+controller_interface::CallbackReturn JointController::sort_command_interfaces()
 {
+    /* Add all loaned command interfaces to internal controller structures */
     if (command_interfaces_.empty())
     {
         return controller_interface::CallbackReturn::ERROR;
@@ -462,6 +475,7 @@ controller_interface::CallbackReturn JointController::get_command_interfaces()
 
 void JointController::reference_callback(const std::shared_ptr<JointCommandMsg> _reference_msg)
 {
+    /* Callback for subscriber */
     if(_reference_msg->desired_position.size() != joint_num_
         || _reference_msg->desired_velocity.size() != joint_num_
         || _reference_msg->kp_scale.size() != joint_num_

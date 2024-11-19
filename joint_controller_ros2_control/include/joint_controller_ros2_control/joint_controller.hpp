@@ -89,8 +89,8 @@ namespace joint_controller
         const std::shared_ptr<JointCommandMsg>& _msg, const std::vector<std::string> & _joint_names);
 
     /* Get state and command interfaces from hardware interface */
-    controller_interface::CallbackReturn get_state_interfaces();
-    controller_interface::CallbackReturn get_command_interfaces();
+    controller_interface::CallbackReturn sort_state_interfaces();
+    controller_interface::CallbackReturn sort_command_interfaces();
 
     /* Get parameters for joints and setup JointControllerCore objects */
     controller_interface::CallbackReturn configure_joints();
