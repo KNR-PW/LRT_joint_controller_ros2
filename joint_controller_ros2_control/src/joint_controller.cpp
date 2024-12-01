@@ -153,9 +153,9 @@ controller_interface::return_type JointController::update_reference_from_subscri
                 && (!std::isnan(joint_reference_msg.feedforward_effort[index])))
         {
             JointCommands& joint_command = joint_commands_[index];
-            joint_command.desired_position_ = joint_reference_msg.desired_position[i];
-            joint_command.desired_velocity_ = joint_reference_msg.desired_velocity[i];
-            joint_command.feedforward_effort_ = joint_reference_msg.feedforward_effort[i];
+            if(has_position_interface_) joint_command.desired_position_ = joint_reference_msg.desired_position[i];
+            if(has_velocity_interface_) joint_command.desired_velocity_ = joint_reference_msg.desired_velocity[i];
+            if(has_feedforward_effort_interface_) joint_command.feedforward_effort_ = joint_reference_msg.feedforward_effort[i];
             if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_reference_msg.kp_scale[i];
             if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_reference_msg.kd_scale[i];
         }
@@ -191,9 +191,9 @@ controller_interface::return_type JointController::update_reference_from_subscri
                 && (!std::isnan(joint_reference_msg.feedforward_effort[index])))
         {
             JointCommands& joint_command = joint_commands_[index];
-            joint_command.desired_position_ = joint_reference_msg.desired_position[i];
-            joint_command.desired_velocity_ = joint_reference_msg.desired_velocity[i];
-            joint_command.feedforward_effort_ = joint_reference_msg.feedforward_effort[i];
+            if(has_position_interface_) joint_command.desired_position_ = joint_reference_msg.desired_position[i];
+            if(has_velocity_interface_) joint_command.desired_velocity_ = joint_reference_msg.desired_velocity[i];
+            if(has_feedforward_effort_interface_) joint_command.feedforward_effort_ = joint_reference_msg.feedforward_effort[i];
             if(has_kp_scale_interface_) joint_command.kp_scale_ = joint_reference_msg.kp_scale[i];
             if(has_kd_scale_interface_) joint_command.kd_scale_ = joint_reference_msg.kd_scale[i];
         }
@@ -241,6 +241,42 @@ controller_interface::CallbackReturn JointController::configure_joints()
             "Size of 'joint params' (%zu) map and number or 'joint_names' (%zu) have to be the same!",
             params_.joint_params.joint_names_map.size(), params_.joint_names.size());
         return CallbackReturn::FAILURE;
+    }
+
+    if(std::find(params_.reference_interfaces.begin(), params_.reference_interfaces.end(), hardware_interface::HW_IF_POSITION) != params_.reference_interfaces.end())
+    {
+        has_position_interface_ = true;
+    }
+    else
+    {
+        for(auto& joint_command : joint_commands_)
+        {
+            joint_command.desired_position_= 0.0;
+        }
+    }
+
+    if(std::find(params_.reference_interfaces.begin(), params_.reference_interfaces.end(), hardware_interface::HW_IF_VELOCITY) != params_.reference_interfaces.end())
+    {
+        has_velocity_interface_ = true;
+    }
+    else
+    {
+        for(auto& joint_command : joint_commands_)
+        {
+            joint_command.desired_velocity_ = 0.0;
+        }
+    }
+
+    if(std::find(params_.reference_interfaces.begin(), params_.reference_interfaces.end(), hardware_interface::HW_IF_EFFORT) != params_.reference_interfaces.end())
+    {
+        has_feedforward_effort_interface_ = true;
+    }
+    else
+    {
+        for(auto& joint_command : joint_commands_)
+        {
+            joint_command.feedforward_effort_ = 0.0;
+        }
     }
 
     if(std::find(params_.reference_interfaces.begin(), params_.reference_interfaces.end(), "kp_scale") != params_.reference_interfaces.end())

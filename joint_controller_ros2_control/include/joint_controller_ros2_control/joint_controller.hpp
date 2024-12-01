@@ -110,7 +110,12 @@ namespace joint_controller
     std::vector<JointCommands> joint_commands_;
     std::vector<JointStates> joint_states_;
 
-    /* For checking if kp and kd interfaces are used */
+    /* For checking if velocity and feedforward effort reference interfaces are used */
+    bool has_position_interface_ = false;
+    bool has_velocity_interface_ = false;
+    bool has_feedforward_effort_interface_ = false;
+
+    /* For checking if kp and kd reference interfaces are used */
     bool has_kp_scale_interface_ = false;
     bool has_kd_scale_interface_ = false;
 
