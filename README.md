@@ -51,7 +51,7 @@ git clone https://github.com/KNR-PW/LRT_joint_controller_ros2.git
 ```bash
 rosdep install --ignore-src --from-paths . -y -r
 ```
-5. Build:
+3. Build:
 ```bash
 colcon build --packages-select joint_controller_msgs joint_controller_ros2_control
 ```
