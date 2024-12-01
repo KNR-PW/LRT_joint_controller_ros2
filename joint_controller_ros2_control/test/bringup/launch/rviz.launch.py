@@ -31,7 +31,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "urdf_file",
-            default_value="single_joint_test.urdf.xacro",
+            default_value="multiple_joints_test.urdf.xacro",
         )
     )
 

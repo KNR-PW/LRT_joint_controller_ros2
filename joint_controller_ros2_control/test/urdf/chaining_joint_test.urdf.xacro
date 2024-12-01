@@ -28,7 +28,7 @@
 
     <gazebo>
         <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
-            <parameters>$(find joint_controller)/config/single_joint_test.yaml</parameters>
+            <parameters>$(find joint_controller)/config/chaining_joint_test.yaml</parameters>
         </plugin>
     </gazebo>
 

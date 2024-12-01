@@ -7,7 +7,15 @@ controller_manager:
 
     joint_controller:
       type: joint_controller/JointController
+    
+    forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
 
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - joint_controller/body_1_joint
+    interface_name: position
 
 joint_controller:
   ros__parameters:
