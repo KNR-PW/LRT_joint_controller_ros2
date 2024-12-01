@@ -114,7 +114,7 @@ joint_controller:
 
 
 ## Troubleshooting/New functionality
-#### Add new `Issiue`. I will try my best to answer. You can also contribute to project via pull requests.
+#### Add new `Issue`. I will try my best to answer. You can also contribute to project via pull requests.
 
 ## Contributing
 1. Change code.
