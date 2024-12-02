@@ -31,7 +31,7 @@ User can choose what interfaces to use.
 
 ### Software supports:
 - :ballot_box_with_check: Working independently via subscriber using `joint_controller/JointCommand` in `joint_controller_msgs` package
-- :ballot_box_with_check: Wokring in chain mode with other controllers
+- :ballot_box_with_check: Working in chain mode with other controllers
 
 ## ROS 2 version
 - Humble (supports `ros2_control` for Rolling)
