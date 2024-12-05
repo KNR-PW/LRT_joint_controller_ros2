@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project provides a `ros2_control` `ChainableControllerInterface` used to simulate PID controller with position, velocity and feedforward effort inputs, like for example mjbots [moteus](https://github.com/mjbots/moteus) controller controller. It can simulate multiple controllers at the same time (for every actuated joint).
+This project provides a `ros2_control` `ChainableControllerInterface` used to simulate PID controller with position, velocity and feedforward effort inputs, like for example mjbots [moteus](https://github.com/mjbots/moteus) controller. It can simulate multiple controllers at the same time (for every actuated joint).
 Controller is implementing following control law for every joint:
 ```math
 \boldsymbol{\tau} = \boldsymbol{k}_{p-scale} \boldsymbol{k}_p(\boldsymbol{p}_{des} - \boldsymbol{p}) + \boldsymbol{k}_{d-scale} \boldsymbol{k}_d(\boldsymbol{v}_{des} - \boldsymbol{v}) + \boldsymbol{k}_i\int_{0}^{t} (\boldsymbol{p}_{des} - \boldsymbol{p}) \,dt  + \boldsymbol{\tau}_{ff}
