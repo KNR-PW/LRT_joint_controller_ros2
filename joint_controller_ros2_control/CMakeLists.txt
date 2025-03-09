@@ -73,6 +73,21 @@ pluginlib_export_plugin_description_file(controller_interface joint_controller.x
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+
+# Test node
+add_executable(
+  single_joint_sinus
+  test/cl_commands/single_joint_sinus.cpp
+)
+ament_target_dependencies(
+  single_joint_sinus PUBLIC
+  ${THIS_PACKAGE_INCLUDE_DEPENDS}
+)
+
+install(TARGETS
+  single_joint_sinus
+  RUNTIME DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

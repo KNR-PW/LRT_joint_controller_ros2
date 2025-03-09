@@ -54,7 +54,7 @@
                 <box size="${rotor_length} ${rotor_size} ${rotor_size}"/>
             </geometry>
             <material name="">
-                <color rgba="0.0 1.0 0.0 1.0"/>
+                <color rgba="0.0 0.0 1.0 1.0"/>
             </material>
         </visual>
     </link>

@@ -4,10 +4,10 @@
     <xacro:property name="PI" value="3.141592"/>
 
     <xacro:property name="rotor_inertia" value="1.0"/>
-    <xacro:property name="rotor_position_max" value="${PI}"/>
-    <xacro:property name="rotor_position_min" value="${-PI}"/>
-    <xacro:property name="rotor_velocity_max" value="10.0"/>
-    <xacro:property name="rotor_effort_max" value="10.0"/>
+    <xacro:property name="rotor_position_max" value="${10 * PI}"/>
+    <xacro:property name="rotor_position_min" value="${-10 * PI}"/>
+    <xacro:property name="rotor_velocity_max" value="50.0"/>
+    <xacro:property name="rotor_effort_max" value="50.0"/>
     
     <link name="world"/>
     
