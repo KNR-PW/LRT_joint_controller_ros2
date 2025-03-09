@@ -1,4 +1,4 @@
-# joint_controller_ros2
+# joint_controller_ros2 <img src="https://github.com/KNR-PW/LRT_joint_controller_ros2/blob/main/joint_controller_test.gif" width="35" height="35" border="10"/>
 
 ## Introduction
 
