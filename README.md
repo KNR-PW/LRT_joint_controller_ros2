@@ -5,7 +5,7 @@
 This project provides a `ros2_control` `ChainableControllerInterface` used to simulate PID controller with position, velocity and feedforward effort inputs, like for example mjbots [moteus](https://github.com/mjbots/moteus) controller. It can simulate multiple controllers at the same time (for every actuated joint).
 Controller is implementing following control law for every joint:
 ```math
-\boldsymbol{\tau} = \boldsymbol{k}_{p-scale} \boldsymbol{k}_p(\boldsymbol{p}_{des} - \boldsymbol{p}) + \boldsymbol{k}_{d-scale} \boldsymbol{k}_d(\boldsymbol{v}_{des} - \boldsymbol{v}) + \boldsymbol{k}_i\int_{0}^{t} (\boldsymbol{p}_{des} - \boldsymbol{p}) \,dt  + \boldsymbol{\tau}_{ff}
+\boldsymbol{\tau} = \boldsymbol{k}_{p_{scale}} \boldsymbol{k}_p(\boldsymbol{p}_{des} - \boldsymbol{p}) + \boldsymbol{k}_{d_{scale}} \boldsymbol{k}_d(\boldsymbol{v}_{des} - \boldsymbol{v}) + \boldsymbol{k}_i\int_{0}^{t} (\boldsymbol{p}_{des} - \boldsymbol{p}) \,dt  + \boldsymbol{\tau}_{ff}
 ```
 where:
  - $\boldsymbol{\tau}$: output joint effort
@@ -15,15 +15,15 @@ where:
  - $\boldsymbol{v}$: actual joint velocity
  - $\boldsymbol{\tau}_{ff}$: feedforward joint effort
  - $\boldsymbol{k}_p$, $\boldsymbol{k}_d$, $\boldsymbol{k}_i$: PID controller constant parameters
- - $\boldsymbol{k}_{p-scale}$: PID proportional dynamic parameter
- - $\boldsymbol{k}_{d-scale}$: PID derivative dynamic parameter
+ - $\boldsymbol{k}_ {p_{scale}}$: PID proportional dynamic parameter
+ - $\boldsymbol{k}_ {d_{scale}}$: PID derivative dynamic parameter
 
 Reference (input) interfaces:
 - $\boldsymbol{p}_{des}$: `position`
 - $\boldsymbol{v_{des}}$: `velocity`
 - $\boldsymbol{\tau}_{ff}$: `feedforward_torque`
-- $\boldsymbol{k}_{p-scale}$: `kp_scale`
-- $\boldsymbol{k}_{d-scale}$: `kd_scale`
+- $\boldsymbol{k}_ {p_{scale}}$: `kp_scale`
+- $\boldsymbol{k}_ {d_{scale}}$: `kd_scale`
   
 User can choose what interfaces to use.
 
