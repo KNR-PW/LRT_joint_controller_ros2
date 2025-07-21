@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
@@ -122,6 +123,9 @@ namespace joint_controller
 
     /* Joint names */
     std::vector<std::string> joint_names_;
+
+    /* Joint name to index map */
+    std::unordered_map<std::string, size_t> joint_name_index_map_;
 
     /* Joint commands and states */
     using JointCommands = joint_controller_core::JointCommands;

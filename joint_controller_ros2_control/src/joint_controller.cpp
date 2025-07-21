@@ -135,7 +135,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
     for(size_t i = 0; i < message_size; ++i)
     {
         const auto& message_joint_name = joint_reference_msg.name[i];
-        auto joint_name_iterator = std::find(joint_names_.begin(), joint_names_.end(), message_joint_name);
+        auto joint_name_iterator = joint_name_index_map_.find(message_joint_name);
         if(joint_name_iterator == joint_names_.end())
         {
             RCLCPP_WARN(get_node()->get_logger(),
@@ -144,7 +144,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
             continue;
         }
 
-        size_t index = std::distance(joint_names_.begin(), joint_name_iterator);
+        size_t index = joint_name_iterator->second;
 
         if ((!std::isnan(joint_reference_msg.desired_position[index])) 
                 && (!std::isnan(joint_reference_msg.desired_velocity[index]))
@@ -313,6 +313,8 @@ controller_interface::CallbackReturn JointController::configure_joints()
         joint_commands_.push_back(JointCommands());
         joint_states_.push_back(JointStates());
 
+        std::pair<std::string, size_t> joint_name_index_pair(params_.joint_names[i], i);
+        joint_name_index_map_.emplace(joint_name_index_pair);
 
         joint_controller_core::JointParameters joint_params;
         auto listener_joint_param = params_.joint_params.joint_names_map[params_.joint_names[i]];
@@ -451,14 +453,14 @@ controller_interface::CallbackReturn JointController::sort_state_interfaces()
     if(position_state_interfaces_.size() != joint_num_)
     {
         RCLCPP_WARN(get_node()->get_logger(),
-            "Size of position state inetrface vector is (%zu), but should be (%zu)",
+            "Size of position state interface vector is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
     if(velocity_state_interfaces_.size() != joint_num_)
     {
         RCLCPP_WARN(get_node()->get_logger(),
-            "Size of position state inetrface vector is (%zu), but should be (%zu)",
+            "Size of velocity state interface vector is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
@@ -500,7 +502,7 @@ controller_interface::CallbackReturn JointController::sort_command_interfaces()
     if(effort_command_interfaces_.size() != joint_num_)
     {
         RCLCPP_WARN(get_node()->get_logger(),
-            "Size of effort command inetrface map is (%zu), but should be (%zu)",
+            "Size of effort command interface map is (%zu), but should be (%zu)",
             effort_command_interfaces_.size(), joint_num_);
         return controller_interface::CallbackReturn::ERROR;
     }
