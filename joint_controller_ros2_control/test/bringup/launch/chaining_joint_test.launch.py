@@ -108,10 +108,10 @@ def generate_launch_description():
         parameters=[robot_description, use_sim_time],
     )
 
-    # Spawn Meldog:
+    # Spawn Robot:
     spawn_entity = Node(package='ros_gz_sim', executable='create',
                     arguments=['-topic', 'robot_description',
-                                '-name', 'Meldog'],
+                                '-name', 'ChainJointTest'],
                     output='screen')
 
     # Load joint_state_broadcaster

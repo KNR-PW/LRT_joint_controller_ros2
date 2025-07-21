@@ -20,9 +20,9 @@
     <xacro:single_joint_macro name="body_4" parent_name="world" x="0.0" y="1.0" inertia="${rotor_inertia}" pos_max="${rotor_position_max}" pos_min="${rotor_position_min}" vel_max="${rotor_velocity_max}" effort_max="${rotor_effort_max}"/>
     <xacro:single_joint_macro name="body_5" parent_name="world" x="0.0" y="-1.0" inertia="${rotor_inertia}" pos_max="${rotor_position_max}" pos_min="${rotor_position_min}" vel_max="${rotor_velocity_max}" effort_max="${rotor_effort_max}"/>
 
-    <ros2_control name="multiple_joints_test" type="system">
-        <hardware>  
-            <plugin>ign_ros2_control/IgnitionSystem</plugin>
+    <ros2_control name="GazeboSimSystem" type="system">
+        <hardware>
+            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </hardware>
         <!-- Add joint hardware interfaces -->
         <xacro:include filename="core/joint_hardware_macros.urdf.xacro"/>   
@@ -34,7 +34,7 @@
     </ros2_control>
 
     <gazebo>
-        <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
             <parameters>$(find joint_controller)/config/multiple_joints_test.yaml</parameters>
         </plugin>
     </gazebo>
