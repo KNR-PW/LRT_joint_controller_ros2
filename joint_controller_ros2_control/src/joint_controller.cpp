@@ -173,7 +173,8 @@ controller_interface::return_type JointController::update_reference_from_subscri
     for(size_t i = 0; i < message_size; ++i)
     {
         const auto& message_joint_name = joint_reference_msg.name[i];
-        auto joint_name_iterator = std::find(joint_names_.begin(), joint_names_.end(), message_joint_name);
+        
+        auto joint_name_iterator = joint_name_index_map_.find(message_joint_name);
         if(joint_name_iterator == joint_names_.end())
         {
             RCLCPP_WARN(get_node()->get_logger(),
@@ -182,7 +183,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
             continue;
         }
 
-        size_t index = std::distance(joint_names_.begin(), joint_name_iterator);
+        size_t index = joint_name_iterator->second;
 
         if ((!std::isnan(joint_reference_msg.desired_position[index])) 
                 && (!std::isnan(joint_reference_msg.desired_velocity[index]))
