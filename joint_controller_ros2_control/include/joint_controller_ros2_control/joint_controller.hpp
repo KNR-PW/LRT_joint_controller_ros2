@@ -38,7 +38,7 @@
 
 #include "joint_controller_ros2_control/joint_controller_core/joint_controller_core.hpp"
 #include "joint_controller_ros2_control/visibility_control.hpp"
-#include "joint_controller_parameters.hpp"
+#include "joint_controller/joint_controller_parameters.hpp"
 
 namespace joint_controller
 {
