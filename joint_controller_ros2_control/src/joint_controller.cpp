@@ -31,7 +31,6 @@ controller_interface::InterfaceConfiguration JointController::command_interface_
     {
         command_interfaces_config.names.push_back(joint_name + "/" + params_.command_interface);
     }
-    RCLCPP_INFO(get_node()->get_logger(), "Command interfaces for JointController configured successfully!");
     return command_interfaces_config;
 }
 
@@ -49,7 +48,6 @@ controller_interface::InterfaceConfiguration JointController::state_interface_co
             state_interfaces_config.names.push_back(joint_name + "/" + interface);
         }
     }
-    RCLCPP_INFO(get_node()->get_logger(), "State interfaces for JointController configured successfully!");
     return state_interfaces_config;
 }
 
@@ -136,7 +134,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
     {
         const auto& message_joint_name = joint_reference_msg.name[i];
         auto joint_name_iterator = joint_name_index_map_.find(message_joint_name);
-        if(joint_name_iterator == joint_names_.end())
+        if(joint_name_iterator == joint_name_index_map_.end())
         {
             RCLCPP_WARN(get_node()->get_logger(),
                 "Joint named (%s) doesn't exist!",
@@ -175,7 +173,7 @@ controller_interface::return_type JointController::update_reference_from_subscri
         const auto& message_joint_name = joint_reference_msg.name[i];
         
         auto joint_name_iterator = joint_name_index_map_.find(message_joint_name);
-        if(joint_name_iterator == joint_names_.end())
+        if(joint_name_iterator == joint_name_index_map_.end())
         {
             RCLCPP_WARN(get_node()->get_logger(),
                 "Joint named (%s) doesn't exist!",

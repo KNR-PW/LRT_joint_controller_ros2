@@ -9,7 +9,7 @@ int main(int argc, char** argv)
 
   const std::string nodeName = "sinus_joint_test";
   const double amplitude = 4 * M_PI;
-  const double frequency = 0.25; //[s]
+  const double frequency = 0.25; // [s]
 
   const double angularVelocity = 2 * M_PI * frequency;
   rclcpp::Node::SharedPtr sinusoidalNode = std::make_shared<rclcpp::Node>(nodeName);
