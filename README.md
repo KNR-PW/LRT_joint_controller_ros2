@@ -53,7 +53,7 @@ rosdep install --ignore-src --from-paths . -y -r
 ```
 3. Build:
 ```bash
-colcon build --packages-select joint_controller_msgs joint_controller_ros2_control
+colcon build --packages-up-to joint_control --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
 ### Controller parameters (example):
